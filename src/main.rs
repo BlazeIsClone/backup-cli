@@ -1,4 +1,4 @@
-use dialoguer::Input;
+use dialoguer::{Input, MultiSelect};
 use ssh2::Session;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -6,7 +6,35 @@ use std::net::TcpStream;
 use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    //let args = Cli::parse();
+    let multiselected = &["Database", "File System"];
+
+    let defaults = &[false, false];
+
+    let selections = MultiSelect::new()
+        .with_prompt("Pick Backup Options (use spacebar to select)")
+        .items(&multiselected[..])
+        .defaults(&defaults[..])
+        .interact()
+        .unwrap();
+
+    if selections.is_empty() {
+        println!("You did not select anything :(");
+    } else {
+        for selection in selections {
+            if multiselected[selection] == "Database" {
+                let _ = db_backup();
+            }
+
+            if multiselected[selection] == "File System" {
+                let _ = fs_backup();
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn fs_backup() -> Result<(), Box<dyn std::error::Error>> {
     let remote_hostname: String = Input::new()
         .with_prompt("Enter hostname")
         .interact()
@@ -14,6 +42,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let remote_user: String = Input::new()
         .with_prompt("Enter username")
+        .interact()
+        .unwrap();
+
+    let remote_dir: String = Input::new()
+        .with_prompt("Filesystem path to backup")
+        .with_initial_text("/var/www/")
         .interact()
         .unwrap();
 
@@ -39,7 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Execute a command on the remote server
     let mut channel = session.channel_session()?;
 
-    let source_dir = "/var/www/wordpress.blazeclone.store";
+    let source_dir = &remote_dir;
     let output_zip = "/var/tmp/le-files.zip";
 
     let zip_cmd = format!("cd {source_dir} && zip -r {output_zip} .");
@@ -88,6 +122,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Finish the progress bar
     pb.finish_with_message("File downloaded successfully.");
+
+    Ok(())
+}
+
+fn db_backup() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Implement database here");
 
     Ok(())
 }
