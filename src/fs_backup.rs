@@ -1,9 +1,10 @@
 use dialoguer::Input;
 use ssh2::Session;
-use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::net::TcpStream;
 use std::path::Path;
+
+use crate::sftp_write_local::sftp_write_local;
 
 pub fn init(
     remote_hostname: &str,
@@ -45,43 +46,7 @@ pub fn init(
     channel.read_to_string(&mut output)?;
     println!("{}", output);
 
-    // Initialize an SFTP session
-    let sftp = session.sftp()?;
-
-    // Open a remote file for reading
-    let mut remote_file = sftp.open(Path::new(&output_zip))?;
-
-    // Create a local file for writing
-    let mut local_file = File::create(format!("{}/files.zip", &local_dir))?;
-
-    let file_size = sftp
-        .stat(Path::new(&output_zip))?
-        .size
-        .ok_or("Failed to get file size")?;
-
-    // Create a progress bar
-    let pb = indicatif::ProgressBar::new(1024);
-    pb.set_style(
-        indicatif::ProgressStyle::default_bar()
-            .template("[{wide_bar}] {bytes}/{total_bytes} ({eta})")
-            .progress_chars("# "),
-    );
-    pb.set_length(file_size);
-
-    // Transfer the file from remote to local with progress
-    let mut total_bytes = 0;
-    let mut buffer = [0; 8192];
-    while let Ok(n) = remote_file.read(&mut buffer) {
-        if n == 0 {
-            break;
-        }
-        local_file.write_all(&buffer[0..n])?;
-        total_bytes += n as u64;
-        pb.set_position(total_bytes);
-    }
-
-    // Finish the progress bar
-    pb.finish_with_message("File downloaded successfully.");
+    let _ = sftp_write_local(&session, &output_zip, &local_dir, "files.zip");
 
     Ok(())
 }
