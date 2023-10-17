@@ -1,6 +1,7 @@
 mod db_backup;
 mod fs_backup;
 mod sftp_write_local;
+mod tcp_session;
 
 use dialoguer::{Input, MultiSelect};
 
