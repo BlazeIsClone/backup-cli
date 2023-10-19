@@ -1,7 +1,7 @@
+use crate::remote_tmpfs::remote_tmpfs_create;
 use crate::sftp_write_local::sftp_write_local;
 use crate::tcp_session::tcp_session;
 use dialoguer::Input;
-use std::io::Read;
 
 pub fn init(
     remote_hostname: &str,
@@ -28,25 +28,26 @@ pub fn init(
     let mysql_user = &mysql_db_username;
     let mysql_password = &mysql_db_password;
     let mysql_databases = &mysql_db;
-    let mysql_output = "/var/tmp/mysql.sql";
+
+    let remote_file_id = remote_tmpfs_create();
+    let mysql_output = format!("/var/tmp/backup-cli-{}-database.sql", &remote_file_id);
 
     let mysqldump_cmd = format!(
         "mysqldump --quick --single-transaction --host={} --port={} --user={} --password={} --databases {} > {}",
         &mysql_host, &mysql_port, &mysql_user, &mysql_password, &mysql_databases, &mysql_output
-        );
+    );
 
     let session = tcp_session(remote_hostname, remote_username)?;
 
-    let mut channel = session.channel_session()?;
-
-    channel.exec(&mysqldump_cmd)?;
-
-    // Read and print the command's output
-    let mut output = String::new();
-    channel.read_to_string(&mut output)?;
-    println!("{}", output);
+    session.channel_session()?.exec(&mysqldump_cmd)?;
 
     let _ = sftp_write_local(&session, &mysql_output, &local_dir, "database.sql");
+
+    // Remove temp file
+    println!("Removing temp file: {}", &mysql_output);
+    let rm_cmd = format!("rm -f /var/tmp/backup-cli-{}-database.sql", &remote_file_id);
+
+    session.channel_session()?.exec(&rm_cmd)?;
 
     Ok(())
 }

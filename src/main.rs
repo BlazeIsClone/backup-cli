@@ -1,5 +1,6 @@
 mod db_backup;
 mod fs_backup;
+mod remote_tmpfs;
 mod sftp_write_local;
 mod tcp_session;
 
@@ -29,6 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let local_dir: String = Input::new()
         .with_prompt("Where do you want to store")
+        .with_initial_text("./")
         .interact()
         .unwrap();
 
