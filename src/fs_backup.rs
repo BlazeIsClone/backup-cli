@@ -1,3 +1,4 @@
+use crate::remote_tmpfs::remote_tmpfs_create;
 use crate::sftp_write_local::sftp_write_local;
 use crate::tcp_session::tcp_session;
 use dialoguer::Input;
@@ -15,12 +16,15 @@ pub fn init(
         .unwrap();
 
     let session = tcp_session(remote_hostname, remote_username)?;
-    let mut channel = session.channel_session()?;
+
+    let remote_file_id = remote_tmpfs_create();
 
     let source_dir = &filesystem_path;
-    let output_zip = "/var/tmp/files.zip";
+    let output_zip = format!("/var/tmp/backup-cli-{}-files.zip", &remote_file_id);
 
     let zip_cmd = format!("cd {source_dir} && zip -r {output_zip} .");
+
+    let mut channel = session.channel_session()?;
 
     channel.exec(&zip_cmd)?;
 
@@ -30,6 +34,11 @@ pub fn init(
     println!("{}", output);
 
     let _ = sftp_write_local(&session, &output_zip, &local_dir, "files.zip");
+
+    // Remove temp file
+    let rm_cmd = format!("rm -f /var/tmp/backup-cli-{}-files.zip", &remote_file_id);
+    println!("Removing temp file: {}", &output_zip);
+    session.channel_session()?.exec(&rm_cmd)?;
 
     Ok(())
 }
