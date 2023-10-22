@@ -31,7 +31,7 @@ pub fn init(
     let mysql_databases = &mysql_db;
 
     let remote_file_id = remote_tmpfs_create();
-    let mysql_output = format!("/var/tmp/backup-cli-{}-database.sql", &remote_file_id);
+    let mysql_output = format!("/tmp/backup-cli-{}-database.sql", &remote_file_id);
 
     let mysqldump_cmd = format!(
         "mysqldump --quick --single-transaction --host={} --port={} --user={} --password={} --databases {} > {}",
@@ -48,7 +48,7 @@ pub fn init(
 
             // Remove temp file
             println!("Removing temp file: {}", &mysql_output);
-            let rm_cmd = format!("rm -f /var/tmp/backup-cli-{}-database.sql", &remote_file_id);
+            let rm_cmd = format!("rm -f /tmp/backup-cli-{}-database.sql", &remote_file_id);
 
             session.channel_session()?.exec(&rm_cmd)?;
         }

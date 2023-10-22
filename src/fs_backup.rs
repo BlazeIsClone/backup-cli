@@ -23,7 +23,7 @@ pub fn init(
             let remote_file_id = remote_tmpfs_create();
 
             let source_dir = &filesystem_path;
-            let output_zip = format!("/var/tmp/backup-cli-{}-files.zip", &remote_file_id);
+            let output_zip = format!("/tmp/backup-cli-{}-files.zip", &remote_file_id);
 
             let zip_cmd = format!("cd {source_dir} && zip -r {output_zip} .");
 
@@ -39,7 +39,7 @@ pub fn init(
             let _ = sftp_write_local(&session, &output_zip, &local_dir, "files.zip");
 
             // Remove temp file
-            let rm_cmd = format!("rm -f /var/tmp/backup-cli-{}-files.zip", &remote_file_id);
+            let rm_cmd = format!("rm -f /tmp/backup-cli-{}-files.zip", &remote_file_id);
             println!("Removing temp file: {}", &output_zip);
             session.channel_session()?.exec(&rm_cmd)?;
         }
