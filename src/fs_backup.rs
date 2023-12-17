@@ -31,14 +31,12 @@ pub fn init(
 
             channel.exec(&zip_cmd)?;
 
-            // Read and print the command's output
             let mut output = String::new();
             channel.read_to_string(&mut output)?;
             println!("{}", output);
 
             let _ = sftp_write_local(&session, &output_zip, &local_dir, "files.zip");
 
-            // Remove temp file
             let rm_cmd = format!("rm -f /tmp/backup-cli-{}-files.zip", &remote_file_id);
             println!("Removing temp file: {}", &output_zip);
             session.channel_session()?.exec(&rm_cmd)?;

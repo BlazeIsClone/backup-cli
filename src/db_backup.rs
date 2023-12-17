@@ -46,7 +46,6 @@ pub fn init(
 
             let _ = sftp_write_local(&session, &mysql_output, &local_dir, "database.sql");
 
-            // Remove temp file
             println!("Removing temp file: {}", &mysql_output);
             let rm_cmd = format!("rm -f /tmp/backup-cli-{}-database.sql", &remote_file_id);
 
