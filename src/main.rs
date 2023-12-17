@@ -8,7 +8,6 @@ use dialoguer::{Input, MultiSelect, Select};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // SSH fetch key
     let current_username = whoami::username();
     let private_key_dir = format!("/home/{}/.ssh", &current_username);
     let private_key_files = scan_private_key_files(&private_key_dir)?;
